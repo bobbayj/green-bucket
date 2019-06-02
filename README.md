@@ -17,6 +17,8 @@ Purpose: To improve tracking of historical investment performance and simplify C
 3. Update portfolio performance automatically
 
 ## Requirements
-- Python 3.0+
-- Pipenv (install using 'pip install pipenv')
+- Python 3.x
+- Pipenv (install using `pip install pipenv`)
 
+## Caveats
+- Web-scraping is based off what is output by the ASX. Any changes by them will require web-scraping code to be rebased
