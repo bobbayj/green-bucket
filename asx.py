@@ -68,18 +68,31 @@ df_chart = df_chart.rename(columns={0:'date',1:'open',2:'high',3:'low',4:'close'
 
 #%%
 df_merge = pd.merge(df_price,df_chart, on='date')
-df_merge = df_merge.set_index('date')
-df_merge.head(10)
+#df_merge = df_merge.set_index('date')
+df_final = df_merge[['date','code','open','high','low','close','volume']]
+df_final.head(10)
 
 #%%
 # Initialise and create sql database and tables
 import mydatabase
+from sqlalchemy.orm import sessionmaker
 
 dbms = mydatabase.MyDatabase(mydatabase.SQLITE,dbname='mydb.sqlite')
-
+  
 # Create table
-#dbms.create_db_tables()
-dbms.print_all_data(mydatabase.HISTORICALS)
+dbms.create_db_tables()
+
+# Insert dataframes
+Session = sessionmaker(bind=dbms.db_engine)
+s = Session()
+s.bulk_insert_mappings(mydatabase.Historicals, df_final.to_dict(orient="records"))
+
+#%%
+# Print table
+#dbms.print_all_data('historicals')
+for row in s.query(mydatabase.Historicals).all():
+    print(row)
+
 #%% Other
 # Insert only new rows:
 # https://www.ryanbaumann.com/blog/2016/4/30/python-pandas-tosql-only-insert-new-rows

@@ -1,10 +1,11 @@
 from sqlalchemy import create_engine
-from sqlalchemy import Table, Column, Date, Float, MetaData
-# Global Variables
-SQLITE = 'sqlite'
+from sqlalchemy import Table, Column, Date, Float, String, MetaData
+from sqlalchemy.ext.declarative import declarative_base
 
-# Table Names
-HISTORICALS = 'historicals'
+
+# Global Variables
+Base = declarative_base()
+SQLITE = 'sqlite'
 
 class MyDatabase:
     # http://docs.sqlalchemy.org/en/latest/core/engines.html
@@ -23,25 +24,6 @@ class MyDatabase:
         else:
             print("DBType is not found in DB_ENGINE")
 
-    # Table definition
-    def create_db_tables(self):
-        metadata = MetaData()
-        users = Table(HISTORICALS, metadata,
-                        Column('date', Date, primary_key=True),
-                        Column('code', Float),
-                        Column('open', Float),
-                        Column('high', Float),
-                        Column('low', Float),
-                        Column('close', Float),
-                        Column('volume', Float)
-                        )
-        try:
-            metadata.create_all(self.db_engine)
-            print("Tables created")
-        except Exception as e:
-            print("Error occurred during Table creation!")
-            print(e)
-
     # Insert, Update, Delete
     def execute_query(self, query=''):
         if query == '' : return
@@ -51,6 +33,15 @@ class MyDatabase:
                 connection.execute(query)
             except Exception as e:
                 print(e)
+
+    def create_db_tables(self):
+        metadata = MetaData()
+        try:
+            metadata.create_all(self.db_engine)
+            print("Tables created")
+        except Exception as e:
+            print("Error occurred during Table creation!")
+            print(e)
 
     def print_all_data(self, table='', query=''):
         query = query if query != '' else "SELECT * FROM '{}';".format(table)
@@ -65,3 +56,18 @@ class MyDatabase:
                     print(row) # print(row[0], row[1], row[2])
                 result.close()
         print("\n")
+
+# Table definition
+class Historicals(Base):
+    __tablename__ = 'historicals'
+    date = Column(Date, primary_key=True)
+    code = Column(String)
+    open = Column(Float)
+    high = Column(Float)
+    low = Column(Float)
+    close = Column(Float)
+    volume = Column(Float)
+
+    def __repr__(self):
+        return "<Historicals(date='%s', code='%s', open='%s', high='%s',low='%s',close='%s',volume='%s')>" % (
+            self.date, self.code, self.open, self.high, self.low, self.close, self.volume)
