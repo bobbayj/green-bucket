@@ -87,12 +87,15 @@ Session = sessionmaker(bind=dbms.db_engine)
 s = Session()
 s.bulk_insert_mappings(mydatabase.Historicals, df_final.to_dict(orient="records"))
 
-#%%
 # Print table
 #dbms.print_all_data('historicals')
 for row in s.query(mydatabase.Historicals).all():
     print(row)
 
+# Close and save session
+s.commit()
+s.close()
+print(f'Database updated with {asx_code}')
 #%% Other
 # Insert only new rows:
 # https://www.ryanbaumann.com/blog/2016/4/30/python-pandas-tosql-only-insert-new-rows
