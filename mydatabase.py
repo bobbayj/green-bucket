@@ -37,7 +37,7 @@ class MyDatabase:
     def create_db_tables(self):
         metadata = MetaData()
         try:
-            metadata.create_all(self.db_engine)
+            Base.metadata.create_all(self.db_engine)
             print("Tables created")
         except Exception as e:
             print("Error occurred during Table creation!")
