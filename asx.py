@@ -17,7 +17,7 @@ def asx_query(asx_code):
 
     price_response = requests.get(url_price)
 
-    print(f'Status code: {price_response.status_code} \nContent type: {price_response.headers["content-type"]}\n')
+    # print(f'Status code: {price_response.status_code} \nContent type: {price_response.headers["content-type"]}\n')
 
     if 'json' in price_response.headers['content-type']:
         price_dict = price_response.json()['data']
@@ -30,7 +30,7 @@ def asx_query(asx_code):
 
     chart_response = requests.get(url_chart)
 
-    print(f'Status code: {chart_response.status_code} \nContent type: {chart_response.headers["content-type"]}\n')
+    # print(f'Status code: {chart_response.status_code} \nContent type: {chart_response.headers["content-type"]}\n')
 
     if 'json' in chart_response.headers['content-type']:
         chart_dict = chart_response.json()
@@ -59,43 +59,47 @@ def asx_query(asx_code):
 
 # ------ Main ------
 
-# Import securities csv and store in list
-stocks = []
+def update_csv_database():
+    # Import securities csv and store in list
+    stocks = []
 
-with open('stocks_list.csv', encoding='utf-8-sig') as file:
-    reader = csv.reader(file)
-    stocks = list(reader)
-    
-    # Collapse the list
-    stocks = [item for sublist in stocks for item in sublist]
+    with open('stocks_list.csv', encoding='utf-8-sig') as file:
+        reader = csv.reader(file)
+        stocks = list(reader)
+        
+        # Collapse the list
+        stocks = [item for sublist in stocks for item in sublist]
 
-    # Initialise and create sql database and tables
-    import mydatabase
-    from sqlalchemy.orm import sessionmaker
+        # Initialise and create sql database and tables
+        import mydatabase
+        from sqlalchemy.orm import sessionmaker
 
-    dbms = mydatabase.MyDatabase(mydatabase.SQLITE,dbname='mydb.sqlite')
+        dbms = mydatabase.MyDatabase(mydatabase.SQLITE,dbname='mydb.sqlite')
 
-# For each stock, get historical data and store
-    # asx_code = 'NAN'    # Test for NAN only at the moment
-for counter, asx_code in enumerate(stocks):
-    df_final = asx_query(asx_code)
+    # For each stock, get historical data and store
+        # asx_code = 'NAN'    # Test for NAN only at the moment
+    for counter, asx_code in enumerate(stocks):
+        df_final = asx_query(asx_code)
 
-    # Create table
-    dbms.create_db_tables()
-    # Insert dataframes
-    Session = sessionmaker(bind=dbms.db_engine)
-    s = Session()
-    s.bulk_insert_mappings(mydatabase.Historicals, df_final.to_dict(orient="records"))
+        if asx_code not in dbms.metadata.tables.keys():
+            dbms.create_db_table(asx_code)
+        
+        df_final.to_sql(asx_code,con=dbms.db_engine, if_exists='replace', index=False)
 
-    # Print table
-    #dbms.print_all_data('historicals')
-    for row in s.query(mydatabase.Historicals).all():
-        print(row)
+        # Insert dataframes
+        # Session = sessionmaker(bind=dbms.db_engine)
+        # s = Session()
+        # s.bulk_insert_mappings(mydatabase.Historicals, df_final.to_dict(orient="records"))
 
-    # Close and save session
-    s.commit()
-    s.close()
-    print(f'Database updated with {asx_code}')
+        # Print table
+        #dbms.print_all_data('historicals')
+        # for row in s.query(mydatabase.Historicals).all():
+        #     print(row)
+
+        # Close and save session
+        # s.commit()
+        # s.close()
+        print(f'Database updated with {asx_code}')
 #%% Other
 # Insert only new rows:
 # https://www.ryanbaumann.com/blog/2016/4/30/python-pandas-tosql-only-insert-new-rows

@@ -4,7 +4,6 @@ from sqlalchemy.ext.declarative import declarative_base
 
 
 # Global Variables
-Base = declarative_base()
 SQLITE = 'sqlite'
 
 class MyDatabase:
@@ -15,11 +14,14 @@ class MyDatabase:
 
     # Main DB Connection Ref Obj
     db_engine = None
+    metadata = None
     def __init__(self, dbtype, username='', password='', dbname=''):
         dbtype = dbtype.lower()
         if dbtype in self.DB_ENGINE.keys():
             engine_url = self.DB_ENGINE[dbtype].format(DB=dbname)
             self.db_engine = create_engine(engine_url)
+            self.metadata = MetaData()
+            self.metadata.reflect(bind=self.db_engine)
             print(self.db_engine)
         else:
             print("DBType is not found in DB_ENGINE")
@@ -34,14 +36,23 @@ class MyDatabase:
             except Exception as e:
                 print(e)
 
-    def create_db_tables(self):
-        metadata = MetaData()
-        try:
-            Base.metadata.create_all(self.db_engine)
-            print("Tables created")
-        except Exception as e:
-            print("Error occurred during Table creation!")
-            print(e)
+    def create_db_table(self, name):
+        tables = self.metadata.tables.keys()
+        if name not in tables:
+            try:
+                table = Table(name, self.metadata,
+                            Column('date',Date,primary_key=True),
+                            Column('code',String),
+                            Column('open',Float),
+                            Column('high',Float),
+                            Column('low',Float),
+                            Column('close',Float),
+                            Column('volume',Float))
+                table.create(self.db_engine)
+                print("Tables created")
+            except Exception as e:
+                print("Error occurred during Table creation!")
+                print(e)
 
     def print_all_data(self, table='', query=''):
         query = query if query != '' else "SELECT * FROM '{}';".format(table)
@@ -56,18 +67,3 @@ class MyDatabase:
                     print(row) # print(row[0], row[1], row[2])
                 result.close()
         print("\n")
-
-# Table definition
-class Historicals(Base):
-    __tablename__ = 'historicals'
-    date = Column(Date, primary_key=True)
-    code = Column(String)
-    open = Column(Float)
-    high = Column(Float)
-    low = Column(Float)
-    close = Column(Float)
-    volume = Column(Float)
-
-    def __repr__(self):
-        return "<Historicals(date='%s', code='%s', open='%s', high='%s',low='%s',close='%s',volume='%s')>" % (
-            self.date, self.code, self.open, self.high, self.low, self.close, self.volume)
