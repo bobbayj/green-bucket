@@ -246,10 +246,12 @@ def plot_candlestick(df,asx_code):
     # Plot
     return plot(fig, filename='candlestick-'+asx_code+'.html')
 # ------ Main ------
-update_csv_database(existingTable=False)
 
-df_raw = pd.read_sql(historical_t_name,con=dbms.db_engine,parse_dates='date')
-asx_code = 'NAN'
+# update_csv_database(existingTable=False)
+
+asx_code = input('ASX ticker to graph: ')
+query = 'SELECT * from "' + historical_t_name + '" WHERE code = "' + asx_code + '"'
+df_raw = pd.read_sql(sql=query,con=dbms.db_engine,parse_dates='date')
 df = df_raw[df_raw.code==asx_code].set_index('date')
 df = df.sort_index(ascending=True)
 # print(df)
