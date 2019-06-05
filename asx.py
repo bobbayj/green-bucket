@@ -245,17 +245,23 @@ def plot_candlestick(df,asx_code):
     
     # Plot
     return plot(fig, filename='candlestick-'+asx_code+'.html')
+def plotting_tool(asx_code):
+    query = 'SELECT * from "' + historical_t_name + '" WHERE code = "' + asx_code + '"'
+    df_raw = pd.read_sql(sql=query,con=dbms.db_engine,parse_dates='date')
+    df = df_raw[df_raw.code==asx_code].set_index('date')
+    df = df.sort_index(ascending=True)
+    plot_candlestick(df,asx_code)
+
 # ------ Main ------
 
 # update_csv_database(existingTable=False)
+print('''
+Welcome Bob's Equity Tracker Tool. Database is currently scraped from the ASX website.
+What would you like to do?
+    1. Update ASX ticker database
+    2. Graph a ticker
+    ''')
 
-asx_code = input('ASX ticker to graph: ')
-query = 'SELECT * from "' + historical_t_name + '" WHERE code = "' + asx_code + '"'
-df_raw = pd.read_sql(sql=query,con=dbms.db_engine,parse_dates='date')
-df = df_raw[df_raw.code==asx_code].set_index('date')
-df = df.sort_index(ascending=True)
-# print(df)
-plot_candlestick(df,asx_code)
 
 
 #%%
