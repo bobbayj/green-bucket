@@ -16,7 +16,7 @@ Purpose: To improve tracking of historical investment performance and simplify C
     - Auto-retrieve from Commsec
 
 3. Update portfolio performance automatically
-    - Create GUI
+    - Create GUI - DONE (basic - create proper Vue.js front-end?)
     - Overlay purchases on graph
     - Track if capital gains discount is achieved
     - Calculate portfolio value

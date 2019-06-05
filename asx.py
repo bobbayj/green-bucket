@@ -253,15 +253,3 @@ def plotting_tool(asx_code):
     plot_candlestick(df,asx_code)
 
 # ------ Main ------
-
-# update_csv_database(existingTable=False)
-print('''
-Welcome Bob's Equity Tracker Tool. Database is currently scraped from the ASX website.
-What would you like to do?
-    1. Update ASX ticker database
-    2. Graph a ticker
-    ''')
-
-
-
-#%%
