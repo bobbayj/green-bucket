@@ -7,6 +7,17 @@ import requests
 import pandas as pd
 from datetime import datetime
 import dateutil.parser
+import mydatabase
+from sqlalchemy.orm import sessionmaker
+import plotly
+import plotly.graph_objs as go
+from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
+
+# Global vars
+dbms = mydatabase.MyDatabase(mydatabase.SQLITE,dbname='mydb.sqlite')
+plotly.tools.set_credentials_file(username='jindustries', api_key='xljIkZ8GGLX85zLfUpKQ')
+# plotly.tools.set_config_file(world_readable=True,sharing='public')
+historical_t_name = 'historical'
 
 # Functions
 def asx_query(asx_code):
@@ -56,53 +67,30 @@ def asx_query(asx_code):
     df_final = df_merge[['date','code','open','high','low','close','volume']]
     # df_final.head(10)
     return df_final
-
-# ------ Main ------
-
-def update_csv_database():
-    # Import securities csv and store in list
+def update_csv_database(existingTable=True):
+    # Initialisation
     stocks = []
 
+    # Stock list
     with open('stocks_list.csv', encoding='utf-8-sig') as file:
         reader = csv.reader(file)
         stocks = list(reader)
-        
-        # Collapse the list
         stocks = [item for sublist in stocks for item in sublist]
 
-        # Initialise and create sql database and tables
-        import mydatabase
-        from sqlalchemy.orm import sessionmaker
-
-        dbms = mydatabase.MyDatabase(mydatabase.SQLITE,dbname='mydb.sqlite')
+    # Create table if needed
+    if not existingTable:
+        dbms.create_db_table(historical_t_name)
 
     # For each stock, get historical data and store
-        # asx_code = 'NAN'    # Test for NAN only at the moment
+    # https://www.pythonsheets.com/notes/python-sqlalchemy.html
     for counter, asx_code in enumerate(stocks):
         df_final = asx_query(asx_code)
-
-        if asx_code not in dbms.metadata.tables.keys():
-            dbms.create_db_table(asx_code)
-        
-        df_final.to_sql(asx_code,con=dbms.db_engine, if_exists='replace', index=False)
-
-        # Insert dataframes
-        # Session = sessionmaker(bind=dbms.db_engine)
-        # s = Session()
-        # s.bulk_insert_mappings(mydatabase.Historicals, df_final.to_dict(orient="records"))
-
-        # Print table
-        #dbms.print_all_data('historicals')
-        # for row in s.query(mydatabase.Historicals).all():
-        #     print(row)
-
-        # Close and save session
-        # s.commit()
-        # s.close()
-        print(f'Database updated with {asx_code}')
-#%% Other
-# Insert only new rows:
-# https://www.ryanbaumann.com/blog/2016/4/30/python-pandas-tosql-only-insert-new-rows
+        if existingTable:
+            df_final = clean_df_db_dups(df_final,historical_t_name,dbms.db_engine,dup_cols='date',filter_categorical_col=asx_code)
+        df_final.to_sql(historical_t_name,con=dbms.db_engine, if_exists='append', index=False)
+        print(f'Historicals updated with {asx_code}')
+    
+    print('End of Stocks CSV')
 def clean_df_db_dups(df, tablename, engine, dup_cols=[],
                          filter_continuous_col=None, filter_categorical_col=None):
     """
@@ -121,6 +109,7 @@ def clean_df_db_dups(df, tablename, engine, dup_cols=[],
     Returns
         Unique list of values from dataframe compared to database table
     """
+    # https://www.ryanbaumann.com/blog/2016/4/30/python-pandas-tosql-only-insert-new-rows
     args = 'SELECT %s FROM %s' %(', '.join(['"{0}"'.format(col) for col in dup_cols]), tablename)
     args_contin_filter, args_cat_filter = None, None
     if filter_continuous_col is not None:
@@ -146,3 +135,125 @@ def clean_df_db_dups(df, tablename, engine, dup_cols=[],
     df = df[df['_merge'] == 'left_only']
     df.drop(['_merge'], axis=1, inplace=True)
     return df
+def plot_candlestick(df,asx_code):
+    # Initial candlestick chart
+    INCREASING_COLOR = '#32CD32'
+    DECREASING_COLOR = '#B22222'
+    data = [ dict(
+            type = 'candlestick',
+            x = df.index,
+            open = df.open,
+            high = df.high,
+            low = df.low,
+            close = df.close,
+            yaxis = 'y2',
+            name = asx_code,
+            increasing = dict( line = dict( color = INCREASING_COLOR ) ),
+            decreasing = dict( line = dict( color = DECREASING_COLOR ) ),
+        )]
+    layout = dict()
+    fig = dict(data = data, layout = layout)
+    
+    # Create layout object
+    fig['layout'] = dict()
+    fig['layout']['plot_bgcolor'] = 'rgb(250, 250, 250)'
+    fig['layout']['xaxis'] = dict( rangeselector = dict( visible = True ) )
+    fig['layout']['yaxis'] = dict( domain = [0, 0.2], showticklabels = False )
+    fig['layout']['yaxis2'] = dict( domain = [0.2, 0.8] )
+    fig['layout']['legend'] = dict( orientation = 'h', y=0.9, x=0.3, yanchor='bottom' )
+    fig['layout']['margin'] = dict( t=40, b=40, r=40, l=40 )
+
+    # Add range buttons
+    rangeselector=dict(
+        visible = True,
+        x = 0, y = 0.9,
+        bgcolor = 'rgba(150, 200, 250, 0.4)',
+        font = dict( size = 13 ),
+        buttons=list([
+            dict(count=1,
+                label='reset',
+                step='all'),
+            dict(count=1,
+                label='1yr',
+                step='year',
+                stepmode='backward'),
+            dict(count=3,
+                label='3 mo',
+                step='month',
+                stepmode='backward'),
+            dict(count=1,
+                label='1 mo',
+                step='month',
+                stepmode='backward'),
+            dict(step='all')
+        ]))
+        
+    fig['layout']['xaxis']['rangeselector'] = rangeselector
+
+    # Add moving average
+    def movingaverage(interval, window_size=10):
+        window = np.ones(int(window_size))/float(window_size)
+        return np.convolve(interval, window, 'same')
+    mv_y = movingaverage(df.close)
+    mv_x = list(df.index)
+
+    # Clip the ends
+    mv_x = mv_x[5:-5]
+    mv_y = mv_y[5:-5]
+
+    fig['data'].append( dict( x=mv_x, y=mv_y, type='scatter', mode='lines', 
+                            line = dict( width = 1 ),
+                            marker = dict( color = '#917400' ),
+                            yaxis = 'y2', name='Moving Average' ) )
+
+    # Set volume bar chart colours
+    colors = []
+
+    for i in range(len(df.close)):
+        if i != 0:
+            if df.close[i] > df.close[i-1]:
+                colors.append(INCREASING_COLOR)
+            else:
+                colors.append(DECREASING_COLOR)
+        else:
+            colors.append(DECREASING_COLOR)
+    
+    # Add volume bar chart
+    fig['data'].append( dict( x=df.index, y=df.volume,                         
+                         marker=dict( color=colors ),
+                         type='bar', yaxis='y', name='Volume' ) )
+
+    # Add bollinger bands
+    def bbands(price, window_size=20, num_of_std=2):
+        rolling_mean = price.rolling(window=window_size).mean()
+        rolling_std  = price.rolling(window=window_size).std()
+        upper_band = rolling_mean + (rolling_std*num_of_std)
+        lower_band = rolling_mean - (rolling_std*num_of_std)
+        return rolling_mean, upper_band, lower_band
+
+    bb_avg, bb_upper, bb_lower = bbands(df.close)
+
+    fig['data'].append( dict( x=df.index, y=bb_upper, type='scatter', yaxis='y2', 
+                            line = dict( width = 1 ),
+                            marker=dict(color='#ccc'), hoverinfo='none', 
+                            legendgroup='Bollinger Bands', name='Bollinger Bands') )
+
+    fig['data'].append( dict( x=df.index, y=bb_lower, type='scatter', yaxis='y2',
+                            line = dict( width = 1 ),
+                            marker=dict(color='#ccc'), hoverinfo='none',
+                            legendgroup='Bollinger Bands', showlegend=False ) )
+    
+    # Plot
+    return plot(fig, filename='candlestick-'+asx_code+'.html')
+# ------ Main ------
+update_csv_database(existingTable=False)
+
+df_raw = pd.read_sql(historical_t_name,con=dbms.db_engine,parse_dates='date')
+asx_code = 'NAN'
+df = df_raw[df_raw.code==asx_code].set_index('date')
+df = df.sort_index(ascending=True)
+# print(df)
+plot_candlestick(df,asx_code)
+
+
+#%%

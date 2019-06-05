@@ -42,7 +42,7 @@ class MyDatabase:
             try:
                 table = Table(name, self.metadata,
                             Column('date',Date,primary_key=True),
-                            Column('code',String),
+                            Column('code',String,primary_key=True),
                             Column('open',Float),
                             Column('high',Float),
                             Column('low',Float),
