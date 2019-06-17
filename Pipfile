@@ -10,6 +10,7 @@ pandas = "*"
 numpy = "*"
 requests = "*"
 plotly = "*"
+sqlalchemy = "*"
 
 [requires]
 python_version = "3.7"

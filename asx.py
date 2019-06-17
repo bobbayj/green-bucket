@@ -86,7 +86,7 @@ def update_csv_database(existingTable=True):
     for counter, asx_code in enumerate(stocks):
         df_final = asx_query(asx_code)
         if existingTable:
-            df_final = clean_df_db_dups(df_final,historical_t_name,dbms.db_engine,dup_cols='date',filter_categorical_col=asx_code)
+            df_final = clean_df_db_dups(df_final,historical_t_name,dbms.db_engine,dup_cols=['date','code'])
         df_final.to_sql(historical_t_name,con=dbms.db_engine, if_exists='append', index=False)
         print(f'Historicals updated with {asx_code}')
     
@@ -130,8 +130,13 @@ def clean_df_db_dups(df, tablename, engine, dup_cols=[],
     elif args_cat_filter:
         args += ' Where ' + args_cat_filter
 
-    df.drop_duplicates(dup_cols, keep='last', inplace=True)
-    df = pd.merge(df, pd.read_sql(args, engine), how='left', on=dup_cols, indicator=True)
+    if 'date' in dup_cols:
+        parse_dates = 'date'
+    else:
+        parse_dates = None
+
+    df.drop_duplicates(dup_cols, keep=False, inplace=True)
+    df = pd.merge(df, pd.read_sql(args, engine,parse_dates=parse_dates), how='left', on=dup_cols, indicator=True)
     df = df[df['_merge'] == 'left_only']
     df.drop(['_merge'], axis=1, inplace=True)
     return df
@@ -253,3 +258,6 @@ def plotting_tool(asx_code):
     plot_candlestick(df,asx_code)
 
 # ------ Main ------
+
+
+#%%
