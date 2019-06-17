@@ -1,4 +1,6 @@
+#%%
 import tkinter as tk
+from tkinter import ttk
 import asx
 
 class Application(tk.Frame):
@@ -7,8 +9,13 @@ class Application(tk.Frame):
         self.master = master
         self.pack(fill='both', expand=True)
         self.create_widgets()
+        self.style = tk.ttk.Style()
+        self.style.configure("BW.TLabel", foreground="blue", background="white")
 
     def create_widgets(self):
+        self.disclaimer = tk.ttk.Label(text="ASX Chart Data may be delayed by up to 3 trading days."
+                                        , style="BW.TLabel", anchor="center")
+        self.disclaimer.pack(side="top", fill='x')
         self.intro = tk.Label(self, text = "Select an option:\n")
         self.intro.pack(side="top")
         self.update = tk.Button(self, text = "Update SQL Database",
@@ -38,3 +45,5 @@ root.title("Bob Equity Tracker Tool")
 root.geometry('350x200')
 app = Application(master=root)
 app.mainloop()
+
+#%%

@@ -151,7 +151,7 @@ def plot_candlestick(df,asx_code):
             high = df.high,
             low = df.low,
             close = df.close,
-            yaxis = 'y2',
+            yaxis = 'y3',
             name = asx_code,
             increasing = dict( line = dict( color = INCREASING_COLOR ) ),
             decreasing = dict( line = dict( color = DECREASING_COLOR ) ),
@@ -163,8 +163,9 @@ def plot_candlestick(df,asx_code):
     fig['layout'] = dict()
     fig['layout']['plot_bgcolor'] = 'rgb(250, 250, 250)'
     fig['layout']['xaxis'] = dict( rangeselector = dict( visible = True ) )
-    fig['layout']['yaxis'] = dict( domain = [0, 0.2], showticklabels = False )
-    fig['layout']['yaxis2'] = dict( domain = [0.2, 0.8] )
+    fig['layout']['yaxis'] = dict( domain = [0, 0.2] )
+    fig['layout']['yaxis2'] = dict( domain = [0.25, 0.45], showticklabels = False )
+    fig['layout']['yaxis3'] = dict( domain = [0.45, 0.9] )
     fig['layout']['legend'] = dict( orientation = 'h', y=0.9, x=0.3, yanchor='bottom' )
     fig['layout']['margin'] = dict( t=40, b=40, r=40, l=40 )
 
@@ -209,7 +210,7 @@ def plot_candlestick(df,asx_code):
     fig['data'].append( dict( x=mv_x, y=mv_y, type='scatter', mode='lines', 
                             line = dict( width = 1 ),
                             marker = dict( color = '#917400' ),
-                            yaxis = 'y2', name='Moving Average' ) )
+                            yaxis = 'y3', name='Moving Average' ) )
 
     # Set volume bar chart colours
     colors = []
@@ -226,7 +227,7 @@ def plot_candlestick(df,asx_code):
     # Add volume bar chart
     fig['data'].append( dict( x=df.index, y=df.volume,                         
                          marker=dict( color=colors ),
-                         type='bar', yaxis='y', name='Volume' ) )
+                         type='bar', yaxis='y2', name='Volume' ) )
 
     # Add bollinger bands
     def bbands(price, window_size=20, num_of_std=2):
@@ -238,16 +239,25 @@ def plot_candlestick(df,asx_code):
 
     bb_avg, bb_upper, bb_lower = bbands(df.close)
 
-    fig['data'].append( dict( x=df.index, y=bb_upper, type='scatter', yaxis='y2', 
+    fig['data'].append( dict( x=df.index, y=bb_upper, type='scatter', yaxis='y3', 
                             line = dict( width = 1 ),
                             marker=dict(color='#ccc'), hoverinfo='none', 
                             legendgroup='Bollinger Bands', name='Bollinger Bands') )
 
-    fig['data'].append( dict( x=df.index, y=bb_lower, type='scatter', yaxis='y2',
+    fig['data'].append( dict( x=df.index, y=bb_lower, type='scatter', yaxis='y3',
                             line = dict( width = 1 ),
                             marker=dict(color='#ccc'), hoverinfo='none',
                             legendgroup='Bollinger Bands', showlegend=False ) )
     
+    # Add RSI chart - see https://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:relative_strength_index_rsi
+    # def rsi(price, window_size=14):
+    #     average_gain = 
+
+    # fig['data'].append (dict( x=df.index, y=, type='scatter', yaxis='y',
+    #                           line = dict( width = 1  ),
+    #                           marker = dict(color='#aaa'), hoverinfo='none',
+    #                           legendgroup='RSI', name='RSI'))
+
     # Plot
     return plot(fig, filename='candlestick-'+asx_code+'.html')
 def plotting_tool(asx_code):

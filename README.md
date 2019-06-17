@@ -4,6 +4,11 @@ For ASX equities only.
 
 Purpose: To improve tracking of historical investment performance and simplify CGT
 
+## How-to Use
+- Run gui.py and follow on-screen prompts
+- Alternatively, run asx.py individually and call functions manually via a python shell
+
+## Functionality
 1. Web scrape ASX and append to SQL database
     - How to web scrape ASX for data (use requests?) - DONE
     - How to save web scraped data - DONE
@@ -20,6 +25,12 @@ Purpose: To improve tracking of historical investment performance and simplify C
     - Overlay purchases on graph
     - Track if capital gains discount is achieved
     - Calculate portfolio value
+
+4. Equity analysis and automatic flagging
+    - Build additional TA charting subplots (see https://plot.ly/python/subplots/)
+    - Send notification if:
+        - TA: Stock crosses upper/lower bound of BollingerBand (1)
+        - TA: (1) and stock crosses RSI to overbought/oversold (2)
 
 ## Requirements
 - Python 3.x
