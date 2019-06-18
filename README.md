@@ -17,8 +17,10 @@ Purpose: To improve tracking of historical investment performance and simplify C
     - Read from SQL database and graph candlestick chart - DONE
 
 2. Create and store a portfolio of stocks
-    - Ingest transaction data to create view of portfolio at any point in time
-    - Auto-retrieve from Commsec
+    - Commsec transaction CSVs
+        - Convert CSV to portfolio summary from beginning of time - WIP
+    - Auto-retrieve transactions csv from Commsec
+        - It may be better to just have the user automatically fill in the transactions?
 
 3. Update portfolio performance automatically
     - Create GUI - DONE (basic - create proper Vue.js front-end?)
@@ -28,6 +30,8 @@ Purpose: To improve tracking of historical investment performance and simplify C
 
 4. Equity analysis and automatic flagging
     - Build additional TA charting subplots (see https://plot.ly/python/subplots/)
+        - RSI with EWMA (DONE)
+        - Add buttons to toggle graphs on/off
     - Send notification if:
         - TA: Stock crosses upper/lower bound of BollingerBand (1)
         - TA: (1) and stock crosses RSI to overbought/oversold (2)

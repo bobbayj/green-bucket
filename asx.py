@@ -279,7 +279,7 @@ def plot_candlestick(df,asx_code):
                               legendgroup='RSI', name='RSI'))
 
     # Plot
-    return plot(fig, filename='candlestick-'+asx_code+'.html')
+    return plot(fig, filename='asx_plots/candlestick-'+asx_code+'.html')
 
 def plotting_tool(asx_code):
     query = 'SELECT * from "' + historical_t_name + '" WHERE code = "' + asx_code + '"'
@@ -287,7 +287,6 @@ def plotting_tool(asx_code):
     df = df_raw[df_raw.code==asx_code].set_index('date')
     df = df.sort_index(ascending=True)
     plot_candlestick(df,asx_code)
-    return df
 
 # ------ Main ------
 
