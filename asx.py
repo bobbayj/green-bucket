@@ -162,10 +162,11 @@ def plot_candlestick(df,asx_code):
     # Create layout object
     fig['layout'] = dict()
     fig['layout']['plot_bgcolor'] = 'rgb(250, 250, 250)'
-    fig['layout']['xaxis'] = dict( rangeselector = dict( visible = True ) )
-    fig['layout']['yaxis'] = dict( domain = [0, 0.2] )
-    fig['layout']['yaxis2'] = dict( domain = [0.25, 0.45], showticklabels = False )
-    fig['layout']['yaxis3'] = dict( domain = [0.45, 0.9] )
+    fig['layout']['hovermode'] = 'x'
+    fig['layout']['xaxis'] = dict( rangeslider = dict( visible = False ) )
+    fig['layout']['yaxis'] = dict( domain = [0, 0.2], tickvals = [30,70], gridcolor='#bdbdbd', gridwidth=2)
+    fig['layout']['yaxis2'] = dict( domain = [0.2, 0.4], showticklabels = False )
+    fig['layout']['yaxis3'] = dict( domain = [0.4, 0.9] )
     fig['layout']['legend'] = dict( orientation = 'h', y=0.9, x=0.3, yanchor='bottom' )
     fig['layout']['margin'] = dict( t=40, b=40, r=40, l=40 )
 
@@ -249,23 +250,44 @@ def plot_candlestick(df,asx_code):
                             marker=dict(color='#ccc'), hoverinfo='none',
                             legendgroup='Bollinger Bands', showlegend=False ) )
     
-    # Add RSI chart - see https://stockcharts.com/school/doku.php?id=chart_school:technical_indicators:relative_strength_index_rsi
-    # def rsi(price, window_size=14):
-    #     average_gain = 
+    # Add RSI chart
+    def RSIfun(price, window_size=14,ewma=True):
+        delta = price.diff()
+        delta = delta[1:]
+        dGain, dLoss = delta.copy(), delta.copy()
+        dGain[dGain < 0] = 0
+        dLoss[dLoss > 0] = 0
 
-    # fig['data'].append (dict( x=df.index, y=, type='scatter', yaxis='y',
-    #                           line = dict( width = 1  ),
-    #                           marker = dict(color='#aaa'), hoverinfo='none',
-    #                           legendgroup='RSI', name='RSI'))
+        if ewma:
+            # Exponentially weighted moving average method
+            RolGain = dGain.ewm(span=window_size).mean()
+            RolLoss = dLoss.abs().ewm(span=window_size).mean()
+        else:
+            # Simple moving average method
+            RolGain = dGain.rolling(window_size).mean()
+            RolLoss = dLoss.abs().rolling(window_size).mean()
+
+        RS = RolGain / RolLoss
+        rsi = 100.0 - (100.0 / (1.0 + RS))
+        return rsi
+
+    rsi_line = RSIfun(df.close)
+
+    fig['data'].append (dict( x=df.index, y=rsi_line, type='scatter', yaxis='y',
+                              line = dict( width = 1  ),
+                              marker = dict(color='#007efc'),
+                              legendgroup='RSI', name='RSI'))
 
     # Plot
     return plot(fig, filename='candlestick-'+asx_code+'.html')
+
 def plotting_tool(asx_code):
     query = 'SELECT * from "' + historical_t_name + '" WHERE code = "' + asx_code + '"'
     df_raw = pd.read_sql(sql=query,con=dbms.db_engine,parse_dates='date')
     df = df_raw[df_raw.code==asx_code].set_index('date')
     df = df.sort_index(ascending=True)
     plot_candlestick(df,asx_code)
+    return df
 
 # ------ Main ------
 
