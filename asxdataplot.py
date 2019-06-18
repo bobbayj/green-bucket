@@ -16,7 +16,7 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 # Global vars
 dbms = mydatabase.MyDatabase(mydatabase.SQLITE,dbname='mydb.sqlite')
 plotly.tools.set_credentials_file(username='jindustries', api_key='xljIkZ8GGLX85zLfUpKQ')
-# plotly.tools.set_config_file(world_readable=True,sharing='public')
+# plotly.tools.set_config_file(world_readable=True,sharing='public') <-- currently printing files offline
 historical_t_name = 'historical'
 
 # Functions
@@ -67,6 +67,7 @@ def asx_query(asx_code):
     df_final = df_merge[['date','code','open','high','low','close','volume']]
     # df_final.head(10)
     return df_final
+
 def update_csv_database(existingTable=True):
     # Initialisation
     stocks = []
@@ -91,6 +92,7 @@ def update_csv_database(existingTable=True):
         print(f'Historicals updated with {asx_code}')
     
     print('End of Stocks CSV')
+
 def clean_df_db_dups(df, tablename, engine, dup_cols=[],
                          filter_continuous_col=None, filter_categorical_col=None):
     """
@@ -140,6 +142,7 @@ def clean_df_db_dups(df, tablename, engine, dup_cols=[],
     df = df[df['_merge'] == 'left_only']
     df.drop(['_merge'], axis=1, inplace=True)
     return df
+
 def plot_candlestick(df,asx_code):
     # Initial candlestick chart
     INCREASING_COLOR = '#32CD32'
