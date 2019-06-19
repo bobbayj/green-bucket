@@ -16,11 +16,13 @@ Purpose: To improve tracking of historical investment performance and simplify C
     - How to store data into SQL programmatically - DONE
     - Read from SQL database and graph candlestick chart - DONE
 
-2. Create and store a portfolio of stocks
-    - Digest Commsec transaction CSV
-        - Convert CSV to portfolio summary from beginning of time - DONE
+2. Portfolio Analysis
+    - Digest Commsec transaction CSV - DONE
         - Does not capture dividends (cash or scrip)
     - Digest user-created dividend CSV
+    - Calculate portfolio holdings and value over time - DONE
+    - Calculate capital gains, recording the holding period via LIFO
+        - In addition, track total cash that has been put into investing (need to distinguish between reinvested vs new equity somehow)
 
 3. Update portfolio performance automatically
     - Create GUI - DONE (basic - create proper Vue.js front-end?)

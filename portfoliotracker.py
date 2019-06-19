@@ -3,11 +3,13 @@ import csv
 import os
 import pandas as pd
 import asxdata
+import mydatabase
 
 # Global vars
 tx_filename = 'private_bob_asx.csv'
 tx_folder = 'portfolio'
 tx_path = os.path.join(tx_folder,tx_filename)
+dbms = mydatabase.MyDatabase(mydatabase.SQLITE,dbname='mydb.sqlite')
 
 def txFun_csvToDf():
     '''Note that this currently only works for CSVs exported from Commsec
@@ -53,13 +55,23 @@ def get_portfolio_holdings():
     return dfHoldings
 
 def get_portfolio_value(holdings):
+    value = pd.DataFrame(index=holdings.index, columns=holdings.columns)
+    for code in holdings.columns:
+        query = 'SELECT * from "historical" WHERE code = "' + code + '"'
+        df_raw = pd.read_sql(sql=query,con=dbms.db_engine,parse_dates='date')
+        df = df_raw[df_raw.code==code].set_index('date')
+        df = df.sort_index(ascending=True)
 
+        value[code] = holdings[code].mul(df.close)
+        print('Portfolio value calculated')
 
-
-    return
+    return value
 # ------ Main ------
 
 dfHoldings = get_portfolio_holdings()
+value = get_portfolio_value(dfHoldings)
 
 #%% Testbed
-
+value = value.loc[value.index > '2018-01-01']
+ax = value.plot.area(figsize=[15,10], title="Bob's ASX Equity Portfolio Value")
+ax.set(ylabel="Value (A$)")

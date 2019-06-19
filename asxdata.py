@@ -17,10 +17,9 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 dbms = mydatabase.MyDatabase(mydatabase.SQLITE,dbname='mydb.sqlite')
 plotly.tools.set_credentials_file(username='jindustries', api_key='xljIkZ8GGLX85zLfUpKQ')
 # plotly.tools.set_config_file(world_readable=True,sharing='public') <-- currently printing files offline
-historical_t_name = 'historical'
 
 # Functions
-def asx_query(asx_code):
+def asx_scrape(asx_code):
     # Create url required for http request
     url_price_prefix = 'https://www.asx.com.au/asx/1/share/'
     url_price_suffix = '/prices?interval=daily&count=999' #Change count for days. Note; limited by ASX
@@ -80,15 +79,15 @@ def update_csv_database(existingTable=True):
 
     # Create table if needed
     if not existingTable:
-        dbms.create_db_table(historical_t_name)
+        dbms.create_db_table('historical')
 
     # For each stock, get historical data and store
     # https://www.pythonsheets.com/notes/python-sqlalchemy.html
     for counter, asx_code in enumerate(stocks):
-        df_final = asx_query(asx_code)
+        df_final = asx_scrape(asx_code)
         if existingTable:
-            df_final = clean_df_db_dups(df_final,historical_t_name,dbms.db_engine,dup_cols=['date','code'])
-        df_final.to_sql(historical_t_name,con=dbms.db_engine, if_exists='append', index=False)
+            df_final = clean_df_db_dups(df_final,'historical',dbms.db_engine,dup_cols=['date','code'])
+        df_final.to_sql('historical',con=dbms.db_engine, if_exists='append', index=False)
         print(f'Historicals updated with {asx_code}')
     
     print('End of Stocks CSV')
@@ -285,7 +284,7 @@ def plot_candlestick(df,asx_code):
     return plot(fig, filename='asx_plots/candlestick-'+asx_code+'.html')
 
 def plotting_tool(asx_code):
-    query = 'SELECT * from "' + historical_t_name + '" WHERE code = "' + asx_code + '"'
+    query = 'SELECT * from "historical" WHERE code = "' + asx_code + '"'
     df_raw = pd.read_sql(sql=query,con=dbms.db_engine,parse_dates='date')
     df = df_raw[df_raw.code==asx_code].set_index('date')
     df = df.sort_index(ascending=True)
