@@ -17,10 +17,10 @@ Purpose: To improve tracking of historical investment performance and simplify C
     - Read from SQL database and graph candlestick chart - DONE
 
 2. Create and store a portfolio of stocks
-    - Commsec transaction CSVs
-        - Convert CSV to portfolio summary from beginning of time - WIP
-    - Auto-retrieve transactions csv from Commsec
-        - It may be better to just have the user automatically fill in the transactions?
+    - Digest Commsec transaction CSV
+        - Convert CSV to portfolio summary from beginning of time - DONE
+        - Does not capture dividends (cash or scrip)
+    - Digest user-created dividend CSV
 
 3. Update portfolio performance automatically
     - Create GUI - DONE (basic - create proper Vue.js front-end?)

@@ -1,7 +1,7 @@
 #%%
 import tkinter as tk
 from tkinter import ttk
-import asx
+import asxdata
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -35,10 +35,10 @@ class Application(tk.Frame):
         self.quit.pack(side="bottom", padx=5, pady=5)
 
     def update_database(self):
-        asx.update_csv_database()
+        asxdata.update_csv_database()
     def plot_ticker(self):
         asx_code = self.ticker.get()
-        asx.plotting_tool(asx_code)
+        asxdata.plotting_tool(asx_code)
 
 root = tk.Tk()
 root.title("Bob Equity Tracker Tool")

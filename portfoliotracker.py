@@ -2,6 +2,7 @@
 import csv
 import os
 import pandas as pd
+import asxdata
 
 # Global vars
 tx_filename = 'private_bob_asx.csv'
@@ -10,52 +11,55 @@ tx_path = os.path.join(tx_folder,tx_filename)
 
 def txFun_csvToDf():
     '''Note that this currently only works for CSVs exported from Commsec
+    Commsec does not inlcude dividends in transactions. The user will
+    need to manually integrate dividends into the transactions CSV
     '''
     df = pd.read_csv(tx_path, parse_dates=True ,index_col=['Date'], dayfirst=True)
     df[['Trade','Qty','Code','drop','Price']] = df['Detail'].str.split(' ',expand=True)
     df['Debit ($)'] = -df['Debit ($)']
     df['Cashflow'] = df['Debit ($)'].combine_first(df['Credit ($)'])
     df.drop(columns=['Reference','Detail','drop','Balance ($)', 'Credit ($)', 'Debit ($)'],inplace=True)
+    
+    df.Qty = pd.to_numeric(df.Qty)
+    df.Price = pd.to_numeric(df.Price)
+
     return df
 
-def portFun_create():
+def get_portfolio_holdings():
     '''Creates the portfolio from transactions df
     '''
     df = txFun_csvToDf()
-    dfContracts = df[df.Type == 'Contract'].sort_index(ascending=True)
-    # Record date of first portfolio transaction as portfolio inception
-    portInception = dfContracts.index[0]
+    dfTrades = df[df.Type == 'Contract'].sort_index(ascending=True)  # Record date of first portfolio transaction as portfolio inception
+    
+    # Give signage to qty on/off based on buy or sell trade
+    dfTrades.loc[dfTrades.Trade == 'B','Trade'] = 1
+    dfTrades.loc[dfTrades.Trade == 'S','Trade'] = -1
+    dfTrades.Qty = dfTrades.Qty.mul(dfTrades.Trade)
+    dfTrades.drop(columns=['Type','Price','Trade'],inplace=True)
+    portInception = dfTrades.index[0]
     print(portInception)
 
     # Create df of dates since portfolio inception
     dateRange = pd.bdate_range(portInception,pd.datetime.today()).tolist()
-    dfPort = pd.DataFrame({'Date': dateRange}).set_index('Date')
+    dfHoldings = pd.DataFrame({'Date': dateRange}).set_index('Date')
 
-    # # Merge stocks to dates in portfolio
-    # for code in dfContracts.Code.unique():
-    #     rightdf = dfContracts[dfContracts.Code==code]
-    #     break
+    for code in dfTrades.Code.unique():
+        dfHoldings = dfHoldings.join(dfTrades[dfTrades.Code==code])
+        dfHoldings.Qty.fillna(0,inplace=True)
+        dfHoldings.Code.ffill(inplace=True)
+        dfHoldings[f'{code}'] = dfHoldings.Qty.cumsum()
+        dfHoldings.drop(columns=['Qty','Cashflow','Code'],inplace=True)
 
-    # dfPort = dfPort.join(rightdf).ffill()
+    return dfHoldings
 
-    # return dfPort, dfContracts
-
-    '''
-    1. For each date, check for a transaction
-        - BUY: Is stock in portfolio? If not, add stock to portfolio
-            - Increase stock holding by X qty
-        - SELL: Decrease stock holding by X qty
-            - Is qty now 0? remove stock from portfolio
-    2. Calculate closing portfolio value for each date
-        - Look up close price in SQL table on Code
-        - If close price exists for day, multiply stock by close price
-        - Else, use value of previous day
-    '''
+def get_portfolio_value(holdings):
 
 
+
+    return
 # ------ Main ------
 
-dfPort, dfContracts = portFun_create()
-
+dfHoldings = get_portfolio_holdings()
 
 #%% Testbed
+
