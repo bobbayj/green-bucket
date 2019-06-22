@@ -24,13 +24,14 @@ Purpose: To improve tracking of historical investment performance and simplify C
     - Calculate capital gains, recording the holding period via LIFO
         - In addition, track total cash that has been put into investing (need to distinguish between reinvested vs new equity somehow)
 
-3. Update portfolio performance automatically
-    - Create GUI - DONE (basic - create proper Vue.js front-end?)
+3. User interface and viewing
+    - Create GUI - DONE
+        - basic tkinter - create proper Vue.js front-end?
+    - Identify holdings and graph value over time - DONE
     - Overlay purchases on graph
-    - Track if capital gains discount is achieved
-    - Calculate portfolio value
 
-4. Equity analysis and automatic flagging
+
+4. Equity technical analysis and automatic flagging
     - Build additional TA charting subplots (see https://plot.ly/python/subplots/)
         - RSI with EWMA (DONE)
         - Add buttons to toggle graphs on/off
