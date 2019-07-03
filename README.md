@@ -19,9 +19,9 @@ Purpose: To improve tracking of historical investment performance and simplify C
 2. Portfolio Analysis
     - Digest Commsec transaction CSV - DONE
         - Does not capture dividends (cash or scrip)
-    - Digest user-created dividend CSV
+    - Digest user-created dividend CSV - DONE
     - Calculate portfolio holdings and value over time - DONE
-    - Calculate capital gains, recording the holding period via LIFO
+    - Calculate capital gains, recording the holding period via LIFO - DONE
         - In addition, track total cash that has been put into investing (need to distinguish between reinvested vs new equity somehow)
 
 3. User interface and viewing
@@ -30,8 +30,12 @@ Purpose: To improve tracking of historical investment performance and simplify C
     - Identify holdings and graph value over time - DONE
     - Overlay purchases on graph
 
+4. News scraping (only good for web though)
+    - ASX Announcements
+    - Twitter view
+    - Online smart search
 
-4. Equity technical analysis and automatic flagging
+5. Equity technical analysis and automatic flagging
     - Build additional TA charting subplots (see https://plot.ly/python/subplots/)
         - RSI with EWMA (DONE)
         - Add buttons to toggle graphs on/off
@@ -42,6 +46,7 @@ Purpose: To improve tracking of historical investment performance and simplify C
 ## Requirements
 - Python 3.x
 - Pipenv (install using `pip install pipenv`)
+- Jupyter Notebook
 
 ## Caveats
 - Web-scraping is based off what is output by the ASX. Any changes by them will require web-scraping code to be rebased

@@ -83,14 +83,17 @@ def update_csv_database(existingTable=True):
 
     # For each stock, get historical data and store
     # https://www.pythonsheets.com/notes/python-sqlalchemy.html
+    updatedCodes = []
+    print('Historicals updated with:')
     for counter, asx_code in enumerate(stocks):
         df_final = asx_scrape(asx_code)
         if existingTable:
             df_final = clean_df_db_dups(df_final,'historical',dbms.db_engine,dup_cols=['date','code'])
         df_final.to_sql('historical',con=dbms.db_engine, if_exists='append', index=False)
-        print(f'Historicals updated with {asx_code}')
+        updatedCodes.append(asx_code)
+        print(f'{asx_code}', end='\t')
     
-    print('End of Stocks CSV')
+    print('...End of Stocks CSV!')
 
 def clean_df_db_dups(df, tablename, engine, dup_cols=[],
                          filter_continuous_col=None, filter_categorical_col=None):
