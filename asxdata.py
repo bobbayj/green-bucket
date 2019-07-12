@@ -15,7 +15,7 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 
 # Global vars
 dbms = mydatabase.MyDatabase(mydatabase.SQLITE,dbname='mydb.sqlite')
-plotly.tools.set_credentials_file(username='jindustries', api_key='xljIkZ8GGLX85zLfUpKQ')
+plotly.tools.set_credentials_file(username='jindustries', api_key='xljIkZ8GGLX85zLfUpKQ') # Please don't abuse my plot.ly api!
 # plotly.tools.set_config_file(world_readable=True,sharing='public') <-- currently printing files offline
 
 # Functions
