@@ -253,3 +253,6 @@ def plotting_tool(asx_code):
     plot_candlestick(df,asx_code)
 
 # ------ Main ------
+
+
+#%%
