@@ -1,5 +1,7 @@
+#%%
 import tkinter as tk
-import asx
+from tkinter import ttk
+import asxdata
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -7,8 +9,13 @@ class Application(tk.Frame):
         self.master = master
         self.pack(fill='both', expand=True)
         self.create_widgets()
+        self.style = tk.ttk.Style()
+        self.style.configure("BW.TLabel", foreground="blue", background="white")
 
     def create_widgets(self):
+        self.disclaimer = tk.ttk.Label(text="ASX Chart Data may be delayed by up to 3 trading days."
+                                        , style="BW.TLabel", anchor="center")
+        self.disclaimer.pack(side="top", fill='x')
         self.intro = tk.Label(self, text = "Select an option:\n")
         self.intro.pack(side="top")
         self.update = tk.Button(self, text = "Update SQL Database",
@@ -28,13 +35,15 @@ class Application(tk.Frame):
         self.quit.pack(side="bottom", padx=5, pady=5)
 
     def update_database(self):
-        asx.update_csv_database()
+        asxdata.update_csv_database()
     def plot_ticker(self):
         asx_code = self.ticker.get()
-        asx.plotting_tool(asx_code)
+        asxdata.plotting_tool(asx_code)
 
 root = tk.Tk()
 root.title("Bob Equity Tracker Tool")
 root.geometry('350x200')
 app = Application(master=root)
 app.mainloop()
+
+#%%

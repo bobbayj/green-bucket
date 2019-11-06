@@ -15,12 +15,11 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 
 # Global vars
 dbms = mydatabase.MyDatabase(mydatabase.SQLITE,dbname='mydb.sqlite')
-plotly.tools.set_credentials_file(username='jindustries', api_key='xljIkZ8GGLX85zLfUpKQ')
-# plotly.tools.set_config_file(world_readable=True,sharing='public')
-historical_t_name = 'historical'
+plotly.tools.set_credentials_file(username='jindustries', api_key='xljIkZ8GGLX85zLfUpKQ') # Please don't abuse my plot.ly api!
+# plotly.tools.set_config_file(world_readable=True,sharing='public') <-- currently printing files offline
 
 # Functions
-def asx_query(asx_code):
+def asx_scrape(asx_code):
     # Create url required for http request
     url_price_prefix = 'https://www.asx.com.au/asx/1/share/'
     url_price_suffix = '/prices?interval=daily&count=999' #Change count for days. Note; limited by ASX
@@ -67,6 +66,7 @@ def asx_query(asx_code):
     df_final = df_merge[['date','code','open','high','low','close','volume']]
     # df_final.head(10)
     return df_final
+
 def update_csv_database(existingTable=True):
     # Initialisation
     stocks = []
@@ -79,18 +79,22 @@ def update_csv_database(existingTable=True):
 
     # Create table if needed
     if not existingTable:
-        dbms.create_db_table(historical_t_name)
+        dbms.create_db_table('historical')
 
     # For each stock, get historical data and store
     # https://www.pythonsheets.com/notes/python-sqlalchemy.html
+    updatedCodes = []
+    print('Historicals updated with:')
     for counter, asx_code in enumerate(stocks):
-        df_final = asx_query(asx_code)
+        df_final = asx_scrape(asx_code)
         if existingTable:
-            df_final = clean_df_db_dups(df_final,historical_t_name,dbms.db_engine,dup_cols='date',filter_categorical_col=asx_code)
-        df_final.to_sql(historical_t_name,con=dbms.db_engine, if_exists='append', index=False)
-        print(f'Historicals updated with {asx_code}')
+            df_final = clean_df_db_dups(df_final,'historical',dbms.db_engine,dup_cols=['date','code'])
+        df_final.to_sql('historical',con=dbms.db_engine, if_exists='append', index=False)
+        updatedCodes.append(asx_code)
+        print(f'{asx_code}', end='\t')
     
-    print('End of Stocks CSV')
+    print('...End of Stocks CSV!')
+
 def clean_df_db_dups(df, tablename, engine, dup_cols=[],
                          filter_continuous_col=None, filter_categorical_col=None):
     """
@@ -130,11 +134,17 @@ def clean_df_db_dups(df, tablename, engine, dup_cols=[],
     elif args_cat_filter:
         args += ' Where ' + args_cat_filter
 
-    df.drop_duplicates(dup_cols, keep='last', inplace=True)
-    df = pd.merge(df, pd.read_sql(args, engine), how='left', on=dup_cols, indicator=True)
+    if 'date' in dup_cols:
+        parse_dates = 'date'
+    else:
+        parse_dates = None
+
+    df.drop_duplicates(dup_cols, keep=False, inplace=True)
+    df = pd.merge(df, pd.read_sql(args, engine,parse_dates=parse_dates), how='left', on=dup_cols, indicator=True)
     df = df[df['_merge'] == 'left_only']
     df.drop(['_merge'], axis=1, inplace=True)
     return df
+
 def plot_candlestick(df,asx_code):
     # Initial candlestick chart
     INCREASING_COLOR = '#32CD32'
@@ -146,7 +156,7 @@ def plot_candlestick(df,asx_code):
             high = df.high,
             low = df.low,
             close = df.close,
-            yaxis = 'y2',
+            yaxis = 'y3',
             name = asx_code,
             increasing = dict( line = dict( color = INCREASING_COLOR ) ),
             decreasing = dict( line = dict( color = DECREASING_COLOR ) ),
@@ -157,9 +167,11 @@ def plot_candlestick(df,asx_code):
     # Create layout object
     fig['layout'] = dict()
     fig['layout']['plot_bgcolor'] = 'rgb(250, 250, 250)'
-    fig['layout']['xaxis'] = dict( rangeselector = dict( visible = True ) )
-    fig['layout']['yaxis'] = dict( domain = [0, 0.2], showticklabels = False )
-    fig['layout']['yaxis2'] = dict( domain = [0.2, 0.8] )
+    fig['layout']['hovermode'] = 'x'
+    fig['layout']['xaxis'] = dict( rangeslider = dict( visible = False ) )
+    fig['layout']['yaxis'] = dict( domain = [0, 0.2], tickvals = [30,70], gridcolor='#bdbdbd', gridwidth=2)
+    fig['layout']['yaxis2'] = dict( domain = [0.2, 0.4], showticklabels = False )
+    fig['layout']['yaxis3'] = dict( domain = [0.4, 0.9] )
     fig['layout']['legend'] = dict( orientation = 'h', y=0.9, x=0.3, yanchor='bottom' )
     fig['layout']['margin'] = dict( t=40, b=40, r=40, l=40 )
 
@@ -204,7 +216,7 @@ def plot_candlestick(df,asx_code):
     fig['data'].append( dict( x=mv_x, y=mv_y, type='scatter', mode='lines', 
                             line = dict( width = 1 ),
                             marker = dict( color = '#917400' ),
-                            yaxis = 'y2', name='Moving Average' ) )
+                            yaxis = 'y3', name='Moving Average' ) )
 
     # Set volume bar chart colours
     colors = []
@@ -221,7 +233,7 @@ def plot_candlestick(df,asx_code):
     # Add volume bar chart
     fig['data'].append( dict( x=df.index, y=df.volume,                         
                          marker=dict( color=colors ),
-                         type='bar', yaxis='y', name='Volume' ) )
+                         type='bar', yaxis='y2', name='Volume' ) )
 
     # Add bollinger bands
     def bbands(price, window_size=20, num_of_std=2):
@@ -233,20 +245,49 @@ def plot_candlestick(df,asx_code):
 
     bb_avg, bb_upper, bb_lower = bbands(df.close)
 
-    fig['data'].append( dict( x=df.index, y=bb_upper, type='scatter', yaxis='y2', 
+    fig['data'].append( dict( x=df.index, y=bb_upper, type='scatter', yaxis='y3', 
                             line = dict( width = 1 ),
                             marker=dict(color='#ccc'), hoverinfo='none', 
                             legendgroup='Bollinger Bands', name='Bollinger Bands') )
 
-    fig['data'].append( dict( x=df.index, y=bb_lower, type='scatter', yaxis='y2',
+    fig['data'].append( dict( x=df.index, y=bb_lower, type='scatter', yaxis='y3',
                             line = dict( width = 1 ),
                             marker=dict(color='#ccc'), hoverinfo='none',
                             legendgroup='Bollinger Bands', showlegend=False ) )
     
+    # Add RSI chart
+    def RSIfun(price, window_size=14,ewma=True):
+        delta = price.diff()
+        delta = delta[1:]
+        dGain, dLoss = delta.copy(), delta.copy()
+        dGain[dGain < 0] = 0
+        dLoss[dLoss > 0] = 0
+
+        if ewma:
+            # Exponentially weighted moving average method
+            RolGain = dGain.ewm(span=window_size).mean()
+            RolLoss = dLoss.abs().ewm(span=window_size).mean()
+        else:
+            # Simple moving average method
+            RolGain = dGain.rolling(window_size).mean()
+            RolLoss = dLoss.abs().rolling(window_size).mean()
+
+        RS = RolGain / RolLoss
+        rsi = 100.0 - (100.0 / (1.0 + RS))
+        return rsi
+
+    rsi_line = RSIfun(df.close)
+
+    fig['data'].append (dict( x=df.index, y=rsi_line, type='scatter', yaxis='y',
+                              line = dict( width = 1  ),
+                              marker = dict(color='#007efc'),
+                              legendgroup='RSI', name='RSI'))
+
     # Plot
-    return plot(fig, filename='candlestick-'+asx_code+'.html')
+    return plot(fig, filename='asx_plots/candlestick-'+asx_code+'.html')
+
 def plotting_tool(asx_code):
-    query = 'SELECT * from "' + historical_t_name + '" WHERE code = "' + asx_code + '"'
+    query = 'SELECT * from "historical" WHERE code = "' + asx_code + '"'
     df_raw = pd.read_sql(sql=query,con=dbms.db_engine,parse_dates='date')
     df = df_raw[df_raw.code==asx_code].set_index('date')
     df = df.sort_index(ascending=True)
