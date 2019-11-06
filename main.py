@@ -1,4 +1,5 @@
 # Runs specific functions
+import portfoliotracker
 import asxdata
 
-asxdata.update_csv_database()
+df = asxdata.asx_scrape('TTT')
