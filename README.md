@@ -25,8 +25,8 @@ Not perfect, but let me know what you think!
     2. Install python package dependencies using `pipenv install`
 
 ## How-to Use
-- Run gui.py and follow on-screen prompts
-- Alternatively, run `asxdata.py` individually and call the functions manually via a python shell.
+- Run gui.py and follow on-screen prompts (not very well built!)
+- Alternatively, run the files `asxdata.py` or `portfoliotracker.py` individually and call the functions/classes manually
 
 Main Functions in `asxdata.py` include:
 - `update_csv_database(existingTable=True)`: Creates/updates a sqlite3 database with historical data, based off the ASX securities in the `stock_list.csv`. Call the function with `existingTable=False` if you are calling this function for the first time.
