@@ -74,7 +74,7 @@ class Commsec:
         # Clean df for export
         cols = ['Date','Ticker','Market','TradeType','Volume','TradePrice','EffectivePrice','Brokerage']
         df = df[cols]
-        df = df.set_index('Date')
+        df = df.set_index(['Date','Ticker'])
 
         return df
     
@@ -128,6 +128,15 @@ class DivScrip:
         csvfiles = sorted(list(dirname.glob('*manual*')))
         latest_csv = csvfiles[-1]
 
-        df = pd.read_csv(latest_csv, index_col='date')
+        df = pd.read_csv(latest_csv)
+        df = self.clean_csv(df)
 
         self.df = df
+    
+    def clean_csv(self,df):
+        # Convert string dates to datetime.date
+        df['Date'] = pd.to_datetime(df['Date'], dayfirst=True).dt.date
+        
+        df = df.set_index(['Date','Ticker'])
+
+        return df
