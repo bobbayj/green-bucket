@@ -38,36 +38,48 @@ Main Functions in `asxdata.py` include:
 - `value(self, plot=False)`: Returns portfolio value as Dataframe. Able to plot (using matplotlib) total portfolio value over time
 
 ## Functionality
-1. Web scrape ASX and append to SQL database
+1. Web scrape ASX and append to SQL database. **Now using yfinance - this scraper is now deprecated**
     - How to web scrape ASX for data (use requests?) - DONE
     - How to save web scraped data - DONE
     - How to Setup SQL database - DONE
     - How to store data into SQL programmatically - DONE
     - Read from SQL database and graph candlestick chart - DONE
 
-2. Portfolio Analysis
+2. Portfolio Generation
     - Digest Commsec transaction CSV - DONE
         - Need to manually enter dividends (cash or scrip) as commsec does not capture this
         - Does not include brokerage costs
-    - Digest user-created dividend CSV - DONE
-    - Calculate portfolio holdings and value over time - DONE
-    - Calculate capital gains, recording the holding period via LIFO - DONE
-        - In addition, track total cash that has been put into investing (need to distinguish between reinvested vs new equity somehow)
-    - Calculate brokerage costs
-        - Commsec
+    - Digest user-created cash/scrip dividends CSV - DONE
+    - Create central transactions/holdings database
+        - ETL broker and user-created CSVs
 
-3. User interface and viewing
+3. Portfolio Analysis
+    - Calculate daily portfolio value
+        - Per stock
+        - Include dividends
+        - Include stock splits
+    - Calculate returns
+        - Time-weighted average return
+        - Keep track of which parcels of shares are sold per CGT event
+    - Calculate capital gains
+        - Recording the holding period via FIFO
+        - In addition, track total cash that has been put into investing
+            - Distinguish between reinvested vs new equity
+    - Calculate brokerage costs
+        - Commsec (simple value based rules)
+
+3. User interface and viewing **on hold**
     - Create GUI - DONE
         - basic tkinter - create proper Vue.js front-end?
     - Identify holdings and graph value over time - DONE
     - Overlay purchases on graph
 
-4. News scraping (only good for web though)
+4. News aggregation **on hold**
     - ASX Announcements
-    - Twitter view
+    - Social media (Twitter, Facebook)
     - Online smart search?
 
-5. Equity technical analysis and automatic flagging
+5. Equity technical analysis and automatic flagging **on hold**
     - Build additional TA charting subplots (see https://plot.ly/python/subplots/)
         - RSI with EWMA (DONE)
         - Add buttons to toggle graphs on/off

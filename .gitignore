@@ -3,3 +3,6 @@ asx_plots/
 
 # ignore private files
 private*
+
+# ignore data files
+data/
