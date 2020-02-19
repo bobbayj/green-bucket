@@ -75,6 +75,10 @@ class Holdings:
             today = datetime.datetime.today().date()
             holdings_filename = f'data/{today}_transactions.csv'
             holdings.to_csv(holdings_filename)
-            print{f'\n\tAll data saved in {holdings_filename}'}
+            print(f'\n\tAll data saved in {holdings_filename}')
+
+            # == START: IMPROVEMENT REQUEST ==
+            # Save to a sql database using df.to_sql(name: str, con=engine, if_exists = 'append')
+            # == END: IMPROVEMENT REQUEST ==
 
         return holdings
